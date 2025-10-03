@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+
+.ballet {
+  font-family: "Ballet", cursive;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* Hide scrollbars across all browsers */
+::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
