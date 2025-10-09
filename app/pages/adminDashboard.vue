@@ -29,7 +29,7 @@
           </div>
           <div>
             <p class="text-gray-500 text-sm">Total Revenue</p>
-            <p class="text-2xl font-semibold text-pink-600">KES 120,000</p>
+            <p class="text-2xl font-semibold text-pink-600"> KES {{ totals.today.totalEarned?.toLocaleString() || 0 }}</p>
           </div>
         </div>
 
@@ -56,7 +56,7 @@
           </div>
           <div>
             <p class="text-gray-500 text-sm">Clients Served</p>
-            <p class="text-2xl font-semibold text-pink-600">350</p>
+            <p class="text-2xl font-semibold text-pink-600">{{ totalServices }}</p>
           </div>
         </div>
 
@@ -83,7 +83,7 @@
           </div>
           <div>
             <p class="text-gray-500 text-sm">Top Staff</p>
-            <p class="text-2xl font-semibold text-pink-600">Jane Doe</p>
+            <p class="text-2xl font-semibold text-pink-600">  {{ topStaff.name }} ({{ topStaff.services }} services)</p>
           </div>
         </div>
 
@@ -110,7 +110,7 @@
           </div>
           <div>
             <p class="text-gray-500 text-sm">Total Commission</p>
-            <p class="text-2xl font-semibold text-pink-600">KES 25,000</p>
+            <p class="text-2xl font-semibold text-pink-600">  KES {{ totals.today.totalCommission?.toLocaleString() || 0 }}</p>
           </div>
         </div>
       </div>
@@ -204,26 +204,35 @@
                 >
                   Price Charged
                 </th>
+                 <th
+                  scope="col"
+                  class="px-6 py-3 text-left font-medium text-gray-500 capitalize tracking-wider whitespace-nowrap"
+                >
+                  Commision Earned
+                </th>
               </tr>
             </thead>
 
             <tbody class="bg-white divide-y divide-gray-200">
               <!-- Dynamic rows -->
-              <tr v-for="item in servicesData" :key="item.id">
+              <tr v-for="(service, index) in servicesData" :key="index">
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.name }}</p>
+                  <p>{{ service.user }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.date }}</p>
+                  <p>{{ service.date }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.time }}</p>
+                  <p>{{ service.time }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.service }}</p>
+                  <p>{{ service.service }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.price }}</p>
+                  <p>{{ service.price }}</p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
+                  <p>{{ service.commisionearned }}</p>
                 </td>
               </tr>
             </tbody>
@@ -265,15 +274,15 @@
 
             <tbody class="bg-white divide-y divide-gray-200">
               <!-- Dynamic rows -->
-              <tr v-for="item in summaryData" :key="item.id">
+              <tr v-for="(row, index) in summaryData" :key="index">
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.name }}</p>
+                  <p>{{ row.name }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.revenue }}</p>
+                  <p>{{ row.revenue }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
-                  <p>{{ item.commision }}</p>
+                  <p>{{ row.commision }}</p>
                 </td>
               </tr>
             </tbody>
@@ -288,105 +297,57 @@
 import Header from "~/components/Header.vue";
 import { ref, watch, onMounted, computed } from "vue";
 import Highcharts from "highcharts";
+import { useUserStore } from "../../stores/user";
 
+const userStore = useUserStore();
+const servicesData = ref([])
 const chartContainer = ref(null);
 const chartInstance = ref(null);
 const currentView = ref("monthly");
+const totalServices = ref(0)
+const topStaff = ref({ name: 'N/A', services: 0 })
 
-const servicesData = reactive([
-  {
-    name: "John Doe",
-    date: "12/11/2024",
-    time: "12:00 AM",
-    service: "manicure",
-    price: "KES 1000",
-  },
-  {
-    name: "John Doe",
-    date: "12/11/2024",
-    time: "12:00 AM",
-    service: "manicure",
-    price: "KES 1000",
-  },
-  {
-    name: "John Doe",
-    date: "12/11/2024",
-    time: "12:00 AM",
-    service: "manicure",
-    price: "KES 1000",
-  },
-  {
-    name: "John Doe",
-    date: "12/11/2024",
-    time: "12:00 AM",
-    service: "manicure",
-    price: "KES 1000",
-  },
-  {
-    name: "John Doe",
-    date: "12/11/2024",
-    time: "12:00 AM",
-    service: "manicure",
-    price: "KES 1000",
-  },
-]);
+// Load user first
+userStore.loadUser();
 
-const summaryData = reactive([
-  {
-    name: "John Doe",
-    revenue: "KES 10,000",
-    commision: "KES 12,000",
-  },
-  {
-    name: "John Doe",
-    revenue: "KES 10,000",
-    commision: "KES 12,000",
-  },
-  {
-    name: "John Doe",
-    revenue: "KES 10,000",
-    commision: "KES 12,000",
-  },
-  {
-    name: "John Doe",
-    revenue: "KES 10,000",
-    commision: "KES 12,000",
-  },
-  {
-    name: "John Doe",
-    revenue: "KES 10,000",
-    commision: "KES 12,000",
-  },
-]);
+const totals = ref({
+  today: { totalEarned: 0, totalCommission: 0 },
+  week: { totalEarned: 0, totalCommission: 0 },
+});
 
-const revenueData = [
-  { month: "Jan", revenue: 5000 },
-  { month: "Feb", revenue: 7500 },
-  { month: "Mar", revenue: 6800 },
-  { month: "Apr", revenue: 8200 },
-];
+const summaryData = ref([]);
+const stats_by_month = ref([]);
+const stats_by_week = ref([]);
 
-const stats_by_month = ref([
-  { month: "Jan", revenue: 1200 },
-  { month: "Feb", revenue: 1500 },
-  { month: "Mar", revenue: 1500 },
-  { month: "Apr", revenue: 1500 },
-  { month: "May", revenue: 1500 },
-  { month: "June", revenue: 1500 },
-  { month: "Jully", revenue: 1500 },
-  { month: "Aug", revenue: 1500 },
-  { month: "Sep", revenue: 1500 },
-  { month: "Oct", revenue: 1500 },
-  { month: "Nov", revenue: 1500 },
-  { month: "Dec", revenue: 1500 },
-]);
 
-const stats_by_week = ref([
-  { week: "Week 1", revenue: 300 },
-  { week: "Week 2", revenue: 450 },
-  { week: "Week 3", revenue: 500 },
-  { week: "Week 4", revenue: 600 },
-]);
+// Function to load the summary data
+onMounted(async () => {
+  try {
+    const res = await $fetch("/api/admin/summary");
+
+    summaryData.value = res.staffSummary.map((s) => ({
+      name: s.name,
+      revenue: `KES ${s.revenue}`,
+      commision: `KES ${s.commission}`,
+    }));
+
+    stats_by_month.value = res.statsByMonth.map((m) => ({
+      month: m.month,
+      revenue: Number(m.revenue),
+    }));
+
+    stats_by_week.value = res.statsByWeek.map((w) => ({
+      week: `Week ${w.week}`,
+      revenue: Number(w.revenue),
+    }));
+
+    console.log("✅ Summary loaded:", summaryData.value);
+    console.log("📊 Monthly stats:", stats_by_month.value);
+    console.log("📈 Weekly stats:", stats_by_week.value);
+  } catch (err) {
+    console.error("Failed to load summary:", err);
+  }
+});
 
 // Function to create/update chart
 const renderChart = () => {
@@ -436,7 +397,7 @@ const renderChart = () => {
         ) + 100,
     },
     tooltip: {
-      valuePrefix: "KES $",
+      valuePrefix: "KES ",
       shared: true,
     },
     plotOptions: {
@@ -472,6 +433,7 @@ const renderChart = () => {
 // Render chart on mount
 onMounted(() => {
   renderChart();
+  window.addEventListener("resize", () => chartInstance.value?.reflow());
 });
 
 // Watch for changes in currentView or data
@@ -479,7 +441,67 @@ watch(
   [currentView, stats_by_month, stats_by_week],
   () => {
     renderChart();
+     window.removeEventListener("resize", () => chartInstance.value?.reflow());
   },
   { deep: true }
 );
+
+
+//  Watch to fetch totals and services
+watch(
+  () => userStore.user,
+  async (newUser) => {
+
+      if (!newUser || !newUser.role) {
+      console.warn("User not loaded yet, skipping service fetch.", newUser);
+      return;
+    }
+
+    console.log("✅ User loaded:", newUser);   
+
+    try {
+      const res = await $fetch("/api/services", {
+        params: { role: newUser.role }, // no userId for admin
+      });
+
+      // ✅ Update services table
+      servicesData.value = res.services
+        .filter((s) => s && s.service_date)
+        .map((s) => ({
+          date: s.service_date
+            ? new Date(s.service_date).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "N/A",
+          time: s.service_time || "N/A",
+          service: s.service_name || "N/A",
+          price: s.price ? `KES ${s.price}` : "KES 0",
+          user: s.username || "Unknown",
+          commisionearned: s.commission ? `KES ${s.commission}` : "KES 0",
+        }));
+
+      // ✅ Update totals
+      totals.value.today = res.totals.today;
+      totals.value.week = res.totals.week;
+
+      // ✅ Add total service count and top staff
+      totalServices.value = res.totalServices || 0;
+      topStaff.value = res.topStaff || { name: "N/A", services: 0 };
+
+      // 🧠 Debug logs
+      console.log("✅ Admin totals:", totals.value);
+      console.log("✅ Total services:", totalServices.value);
+      console.log("✅ Top staff:", topStaff.value);
+    } catch (err) {
+      console.error("❌ Failed to fetch services:", err);
+    }
+  },
+  { immediate: true } // runs immediately if user already loaded
+);
+
+
+
+
 </script>

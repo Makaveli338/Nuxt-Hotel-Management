@@ -84,11 +84,7 @@
               >
                 Stock Status
               </th>
-              <th
-                class="py-3 px-4 text-start text-sm font-medium text-gray-600"
-              >
-                Supplier
-              </th>
+              
               <th
                 class="py-3 px-4 text-start text-sm font-medium text-gray-600"
               >
@@ -134,17 +130,24 @@
                 >
                   Low Stock
                 </span>
-              </td>
+              </td>             
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                {{ item.supplier }}
+               {{ formatDate(item.last_restock) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                {{ item.lastRestock }}
-              </td>
-              <td>        
-                <button  @click="showEditModal = true" class="text-pink-600 hover:text-pink-800 cursor-pointer">
-                  Edit
-                </button>
+              <td> 
+                <div class="flex gap-3">
+                  <button  @click="openEditModal(item)" class="hover:bg-gray-200 cursor-pointer p-2 rounded-full aspect-square">
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                  </button>
+                  <button @click="deleteItem(item.id)" class="cursor-pointer hover:bg-gray-200 p-2 rounded-full aspect-square">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                  </button>
+                </div>       
+
               </td>
             </tr>
           </tbody>
@@ -155,7 +158,7 @@
 
   <!-- Add Product Modal-->
   <TransitionRoot as="template" :show="showModal">
-    <Dialog as="div" class="relative z-50" @close="open = false">
+    <Dialog as="div" class="relative z-50" @close="showModal = false">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -200,6 +203,7 @@
                         >Item Name</label
                       >
                       <input
+                      v-model="newProduct.name"
                         type="text"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
@@ -210,6 +214,7 @@
                         >Item Category</label
                       >
                       <select
+                      v-model="newProduct.category"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       >
                         <option value="">Select an option</option>
@@ -226,6 +231,7 @@
                         >Item Quantity</label
                       >
                       <input
+                      v-model="newProduct.quantity"
                         type="number"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
@@ -237,44 +243,8 @@
                         >Item Price</label
                       >
                       <input
+                      v-model="newProduct.price"
                         type="text"
-                        class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                      />
-                    </div>
-
-                    <!-- Item Category -->
-                    <div>
-                      <label class="block font-medium text-gray-700"
-                        >Item Category</label
-                      >
-                      <select
-                        class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                      >
-                        <option value="">Select an option</option>
-                        <option value="skincare">In Stock</option>
-                        <option value="makeup">Out of Stock</option>
-                        <option value="haircare">Low Stock</option>
-                      </select>
-                    </div>
-
-                    <!-- Item Supplier -->
-                    <div>
-                      <label class="block font-medium text-gray-700"
-                        >Item Supplier</label
-                      >
-                      <input
-                        type="text"
-                        class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                      />
-                    </div>
-
-                    <!--Last Restock-->
-                    <div>
-                      <label class="block font-medium text-gray-700"
-                        >Last Restock</label
-                      >
-                      <input
-                        type="date"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
                     </div>
@@ -293,10 +263,11 @@
                 </button>
 
                 <button
+                 @click="addProduct"
                   type="button"
                   class="bg-pink-600 hover:bg-pink-800 cursor-pointer text-white px-4 py-2 rounded-full shadow"
                 >
-                  Save Changes
+                 Add Product
                 </button>
               </div>
             </DialogPanel>
@@ -308,7 +279,7 @@
 
   <!-- Edit Product Modal-->
   <TransitionRoot as="template" :show="showEditModal">
-    <Dialog as="div" class="relative z-50" @close="open = false">
+    <Dialog as="div" class="relative z-50" @close="showEditModal = false">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -353,6 +324,7 @@
                         >Item Name</label
                       >
                       <input
+                      v-model="editForm.name"
                         type="text"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
@@ -363,6 +335,7 @@
                         >Item Category</label
                       >
                       <select
+                      v-model="editForm.category"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       >
                         <option value="">Select an option</option>
@@ -379,10 +352,11 @@
                         >Item Quantity</label
                       >
                       <input
+                      v-model="editForm.quantity"
                         type="number"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
-                    </div>
+                    </div>                  
 
                     <!-- Item Price -->
                     <div>
@@ -390,35 +364,26 @@
                         >Item Price</label
                       >
                       <input
+                      v-model="editForm.price"
                         type="text"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
-                    </div>
-
-                    <!-- Item Category -->
-                    <div>
+                    </div>   
+                    
+                     <!--Stock status-->
+                     <div>
                       <label class="block font-medium text-gray-700"
-                        >Item Category</label
+                        >Stock Status</label
                       >
                       <select
+                      v-model="editForm.status"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       >
                         <option value="">Select an option</option>
-                        <option value="skincare">In Stock</option>
-                        <option value="makeup">Out of Stock</option>
-                        <option value="haircare">Low Stock</option>
+                        <option value="In Stock">In Stock</option>
+                        <option value="Low Stock">Low Stock</option>
+                        <option value="Out of Stock">Out of stock</option>
                       </select>
-                    </div>
-
-                    <!-- Item Supplier -->
-                    <div>
-                      <label class="block font-medium text-gray-700"
-                        >Item Supplier</label
-                      >
-                      <input
-                        type="text"
-                        class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                      />
                     </div>
 
                     <!--Last Restock-->
@@ -427,6 +392,7 @@
                         >Last Restock</label
                       >
                       <input
+                      v-model="editForm.last_restock"
                         type="date"
                         class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                       />
@@ -446,6 +412,7 @@
                 </button>
 
                 <button
+                 @click="saveChanges"
                   type="button"
                   class="bg-pink-600 hover:bg-pink-800 cursor-pointer text-white px-4 py-2 rounded-full shadow"
                 >
@@ -460,9 +427,9 @@
   </TransitionRoot>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Header from "~/components/Header.vue";
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted, computed, reactive } from "vue";
 import {
   Disclosure,
   DisclosureButton,
@@ -476,56 +443,140 @@ import {
 
 const showModal = ref(false);
 const showEditModal = ref(false);
-const inventoryData = reactive([
-  {
-    id: 1,
-    name: "Rose Glow Serum",
-    category: "Skincare",
-    quantity: 45,
-    price: "KES 500",
-    status: "In Stock",
-    supplier: "GlowCo Supplies",
-    lastRestock: "2025-09-15",
-  },
-  {
-    id: 2,
-    name: "Velvet Matte Lipstick",
-    category: "Makeup",
+const selectedCategory = ref(null);
+const selectedItem = ref<InventoryItem | null>(null);
+const { data: inventoryData, refresh } = await useFetch<InventoryItem[]>('/api/inventory', {
+  default: () => [],
+});
+
+
+// Temporary reactive object for form fields
+interface EditForm {
+  name: string
+  category: string
+  quantity: number
+  price: number
+  status: string
+  last_restock?: string
+}
+
+const editForm = reactive<EditForm>({
+  name: '',
+  category: '',
+  quantity: 0,
+  price: 0,
+  status: '',
+  last_restock: ''
+})
+
+interface InventoryItem {
+  id: number;
+  name: string;
+  category: string;
+  quantity: number;
+  price: number;
+  status: string;
+  last_restock: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+
+const openEditModal = (item: InventoryItem) => {
+  selectedItem.value = item
+  editForm.name = item.name
+  editForm.category = item.category
+  editForm.quantity = item.quantity
+  editForm.price = item.price
+  editForm.status = item.status
+  editForm.last_restock = (item.last_restock ?? '').split('T')[0];
+    showEditModal.value = true
+}
+
+// Functionality to add new product
+const newProduct = reactive({
+  name: "",
+  category: "",
+  quantity: 0,
+  price: "",
+  status: "In Stock",
+  last_restock: "",
+});
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-KE', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  });
+};
+
+
+const addProduct = async () => {
+  await $fetch("/api/inventory", {
+    method: "POST",
+    body: newProduct,
+  });
+
+  showModal.value = false;
+  await refresh(); // reload updated list
+  Object.assign(newProduct, {
+    name: "",
+    category: "",
     quantity: 0,
-    price: "KES 500",
-    status: "Out of Stock",
-    supplier: "BeautyEssentials Ltd",
-    lastRestock: "2025-08-20",
-  },
-  {
-    id: 3,
-    name: "Aloe Soothing Gel",
-    category: "Skincare",
-    quantity: 120,
-    price: "KES 500",
+    price: "",
     status: "In Stock",
-    supplier: "NatureCare",
-    lastRestock: "2025-09-25",
-  },
-  {
-    id: 4,
-    name: "Nail Polish Remover",
-    category: "Nails",
-    quantity: 15,
-    price: "KES 500",
-    status: "Low Stock",
-    supplier: "PolishWorld",
-    lastRestock: "2025-09-30",
-  },
-  {
-    id: 5,
-    name: "Hydrating Hair Mask",
-    category: "Haircare",
-    quantity: 5,
-    price: "KES 500",
-    status: "Low Stock",
-    supplier: "HairLux",
-    lastRestock: "2025-09-28",
-  },
-]);
+    last_restock: "",
+  });
+};
+
+// Function to update inventory item
+const saveChanges = async () => {
+  if (!selectedItem.value) return;
+
+  try {
+    await $fetch(`/api/inventory/${selectedItem.value.id}`, {
+      method: 'PUT',
+      body: {
+        name: editForm.name,
+        category: editForm.category,
+        quantity: editForm.quantity,
+        price: editForm.price,
+        status: editForm.status,
+        last_restock: editForm.last_restock,
+      },
+    });
+
+    await refresh(); // reload updated list
+    showEditModal.value = false;
+  } catch (err) {
+    console.error('Error updating item:', err);
+  }
+};
+
+// Function to delete an entry
+const deleteItem = async (id: number) => {
+  if (!confirm("Are you sure you want to delete this item?")) return;
+
+  try {
+    await $fetch(`/api/inventory/${id}`, {
+      method: "DELETE",
+    });
+
+    // Option 1: Refresh all data
+    await refresh();
+
+  } catch (err) {
+    console.error("Error deleting item:", err);
+  }
+};
+
+
+
+
+
+
+
 </script>
