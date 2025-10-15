@@ -91,10 +91,14 @@
           <!-- Daily Details -->
           <div class="flex flex-col gap-3">
             <h1 class="text-xl font-semibold">
-             {{ selectedDate 
-      ? `Selected Day's data (${selectedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}):` 
-      : "Today's data:" 
-  }}
+              {{
+                selectedDate
+                  ? `Selected Day's data (${selectedDate.toLocaleDateString(
+                      "en-GB",
+                      { day: "2-digit", month: "short", year: "numeric" }
+                    )}):`
+                  : "Today's data:"
+              }}
             </h1>
 
             <div class="space-y-3">
@@ -159,7 +163,7 @@
 
           <tbody class="bg-white divide-y divide-gray-200">
             <!-- Dynamic rows -->
-            <tr v-for="(service, index) in servicesData" :key="index">
+            <tr v-for="(service, index) in paginatedServices" :key="index">
               <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
                 <p>{{ service.date }}</p>
               </td>
@@ -178,6 +182,15 @@
             </tr>
           </tbody>
         </table>
+        <!-- Pagination -->
+     <PaginationNavigation
+  :current_page="currentServicePage"
+  :page_size="itemsPerPage"
+  :total_entries="servicesData.length"
+  :total_pages="Math.ceil(servicesData.length / itemsPerPage)"
+  @payload="onServicePageChange"
+/>
+
       </div>
     </div>
   </section>
@@ -189,6 +202,8 @@ import smallCalender from "~/components/smallCalender.vue";
 import { ref, reactive, watch, computed, onMounted } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useUserStore } from "../../stores/user";
+import PaginationNavigation from "~/components/pagination.vue";
+
 
 const auth = useAuthStore();
 const userStore = useUserStore();
@@ -200,6 +215,20 @@ const servicesData = ref([]);
 const loading = ref(true);
 const error = ref("");
 const selectedDate = ref(null);
+const currentServicePage = ref(1);
+const itemsPerPage = ref(5);
+
+
+const onServicePageChange = ({ page, page_size }) => {
+  currentServicePage.value = page;
+  itemsPerPage.value = page_size;
+};
+
+const paginatedServices = computed(() => {
+  const start = (currentServicePage.value - 1) * itemsPerPage.value;
+  return servicesData.value.slice(start, start + itemsPerPage.value);
+});
+
 
 // ✅ Initialize totals with structure
 const totals = ref({
@@ -215,8 +244,6 @@ const displayedTotals = computed(() => {
   }
   return totals.value.today;
 });
-
-
 
 onMounted(async () => {
   userStore.loadUser();
@@ -240,22 +267,26 @@ async function fetchServicesForDate(date = null) {
 
   try {
     const params = { userId: userStore.user.id };
-   if (date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  params.date = `${year}-${month}-${day}`;date
-}
+    if (date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      params.date = `${year}-${month}-${day}`;
+      date;
+    }
 
     const res = await $fetch("/api/services", { params });
 
     if (date) {
       totals.value.selectedDay = res.totals?.today || res.totals;
-       console.log("📤 Fetching services for date:", date ? date.toISOString().slice(0, 10) : "TODAY");
-        
+      console.log(
+        "📤 Fetching services for date:",
+        date ? date.toISOString().slice(0, 10) : "TODAY"
+      );
     } else {
       totals.value.today = res.totals?.today || res.totals;
       totals.value.week = res.totals?.week || {};
+      console.log("✅ Totals assigned:", totals.value);
     }
 
     servicesData.value = res.services.map((s) => ({

@@ -1,8 +1,47 @@
 import pool from '../utils/db'
+import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  addHours,
+  isWithinInterval,
+} from 'date-fns'
 
-export default defineEventHandler(async (event) => {
+// ✅ Define types for your service row and response
+interface ServiceRow {
+  id: number
+  user_id: number
+  service_name: string
+  price: string // stored as string in DB
+  service_time: string
+  service_date: string | Date
+  commission: string
+  username: string
+}
+
+interface Totals {
+  totalEarned: number
+  totalCommission: number
+}
+
+interface ApiResponse {
+  totals: {
+    today: Totals
+    week?: Totals
+  }
+  totalServices: number
+  topStaff: { name: string | null; services: number }
+  services: ServiceRow[]
+}
+
+export default defineEventHandler(async (event): Promise<ApiResponse> => {
   const query = getQuery(event)
-  const { userId, role } = query // role: "admin" or "staff"
+  const { userId, role, date } = query as {
+    userId?: string
+    role?: string
+    date?: string
+  }
 
   try {
     // ✅ 1️⃣ Fetch all services
@@ -12,7 +51,7 @@ export default defineEventHandler(async (event) => {
       JOIN users u ON s.user_id = u.id
       WHERE 1=1
     `
-    const params: any[] = []
+    const params: (string | number)[] = []
 
     // Only filter by user_id for staff
     if (role !== 'admin' && userId) {
@@ -21,54 +60,79 @@ export default defineEventHandler(async (event) => {
     }
 
     servicesSql += ` ORDER BY s.service_date DESC`
-    const allServices = (await pool.query(servicesSql, params)).rows
 
-    // ✅ 2️⃣ Calculate totals
-    const today = new Date()
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-    const weekStart = new Date(today)
-    weekStart.setDate(today.getDate() - today.getDay()) // Sunday
+    const allServices = (await pool.query<ServiceRow>(servicesSql, params)).rows
+    console.log('🧩 Total services fetched:', allServices.length)
 
+    // ✅ 2️⃣ Time setup — use Kenya time (UTC+3)
+    const now = date ? new Date(date + 'T00:00:00Z') : new Date()
+    const localNow = addHours(now, 3) // adjust to EAT
+    const todayStart = startOfDay(localNow)
+    const todayEnd = endOfDay(localNow)
+    const weekStart = startOfWeek(localNow, { weekStartsOn: 1 }) // Monday
+    const weekEnd = endOfWeek(localNow, { weekStartsOn: 1 })
+
+    console.log('🕒 Date param:', date || '(today)')
+    console.log('📆 Today range:', todayStart.toISOString(), todayEnd.toISOString())
+
+    // ✅ 3️⃣ Totals initialization
     let totalTodayEarned = 0
     let totalTodayCommission = 0
     let totalWeekEarned = 0
     let totalWeekCommission = 0
 
-    allServices.forEach((s) => {
+    const filteredServices: ServiceRow[] = []
+
+    // ✅ 4️⃣ Compute totals
+    for (const s of allServices) {
       const serviceDate = new Date(s.service_date)
+      const price = parseFloat(s.price) || 0
+      const commission = parseFloat(s.commission) || 0
 
-      // Today
-      if (serviceDate >= todayStart) {
-        totalTodayEarned += parseFloat(s.price)
-        totalTodayCommission += parseFloat(s.commission)
+      // Specific date mode
+      if (date) {
+        if (isWithinInterval(serviceDate, { start: todayStart, end: todayEnd })) {
+          filteredServices.push(s)
+          totalTodayEarned += price
+          totalTodayCommission += commission
+        }
+      } else {
+        // Dashboard (today + week)
+        if (isWithinInterval(serviceDate, { start: todayStart, end: todayEnd })) {
+          totalTodayEarned += price
+          totalTodayCommission += commission
+        }
+        if (isWithinInterval(serviceDate, { start: weekStart, end: weekEnd })) {
+          totalWeekEarned += price
+          totalWeekCommission += commission
+        }
       }
+    }
 
-      // This week
-      if (serviceDate >= weekStart) {
-        totalWeekEarned += parseFloat(s.price)
-        totalWeekCommission += parseFloat(s.commission)
-      }
-    })
-
-    // Total services performed
+    // ✅ 5️⃣ Aggregate other info
     const totalServices = allServices.length
 
-    // Top staff (by number of services)
     const staffCount: Record<string, number> = {}
-    allServices.forEach((s) => {
+    for (const s of allServices) {
       staffCount[s.username] = (staffCount[s.username] || 0) + 1
-    })
+    }
 
-    const topStaff = Object.entries(staffCount).sort((a, b) => b[1] - a[1])[0] || [null, 0]
+    const topStaffEntry = Object.entries(staffCount).sort((a, b) => b[1] - a[1])[0]
+    const topStaff = topStaffEntry
+      ? { name: topStaffEntry[0], services: topStaffEntry[1] }
+      : { name: null, services: 0 }
 
+    // ✅ 6️⃣ Return response
     return {
-      totals: {
-        today: { totalEarned: totalTodayEarned, totalCommission: totalTodayCommission },
-        week: { totalEarned: totalWeekEarned, totalCommission: totalWeekCommission },
-      },
+      totals: date
+        ? { today: { totalEarned: totalTodayEarned, totalCommission: totalTodayCommission } }
+        : {
+            today: { totalEarned: totalTodayEarned, totalCommission: totalTodayCommission },
+            week: { totalEarned: totalWeekEarned, totalCommission: totalWeekCommission },
+          },
       totalServices,
-      topStaff: { name: topStaff[0], services: topStaff[1] },
-      services: allServices,
+      topStaff,
+      services: date ? filteredServices : allServices,
     }
   } catch (err: any) {
     console.error('[SERVICE API ERROR]', err.message)

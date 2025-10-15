@@ -28,8 +28,10 @@
             </svg>
           </div>
           <div>
-            <p class="text-gray-500 text-sm">Total Revenue</p>
-            <p class="text-2xl font-semibold text-pink-600"> KES {{ totals.today.totalEarned?.toLocaleString() || 0 }}</p>
+            <p class="text-gray-500 text-sm">Total Revenue (As per Month)</p>
+            <p class="text-2xl font-semibold text-pink-600">
+              KES {{ totals.month.totalEarned?.toLocaleString() || 0 }}
+            </p>
           </div>
         </div>
 
@@ -56,7 +58,9 @@
           </div>
           <div>
             <p class="text-gray-500 text-sm">Clients Served</p>
-            <p class="text-2xl font-semibold text-pink-600">{{ totalServices }}</p>
+            <p class="text-2xl font-semibold text-pink-600">
+              {{ totalServices }}
+            </p>
           </div>
         </div>
 
@@ -83,7 +87,9 @@
           </div>
           <div>
             <p class="text-gray-500 text-sm">Top Staff</p>
-            <p class="text-2xl font-semibold text-pink-600">  {{ topStaff.name }} ({{ topStaff.services }} services)</p>
+            <p class="text-2xl font-semibold text-pink-600">
+              {{ topStaff.name }} ({{ topStaff.services }} services)
+            </p>
           </div>
         </div>
 
@@ -109,8 +115,10 @@
             </svg>
           </div>
           <div>
-            <p class="text-gray-500 text-sm">Total Commission</p>
-            <p class="text-2xl font-semibold text-pink-600">  KES {{ totals.today.totalCommission?.toLocaleString() || 0 }}</p>
+            <p class="text-gray-500 text-sm">Total Commission (As per Month)</p>
+            <p class="text-2xl font-semibold text-pink-600">
+              KES {{ totals.month.totalCommission?.toLocaleString() || 0 }}
+            </p>
           </div>
         </div>
       </div>
@@ -204,7 +212,7 @@
                 >
                   Price Charged
                 </th>
-                 <th
+                <th
                   scope="col"
                   class="px-6 py-3 text-left font-medium text-gray-500 capitalize tracking-wider whitespace-nowrap"
                 >
@@ -215,7 +223,7 @@
 
             <tbody class="bg-white divide-y divide-gray-200">
               <!-- Dynamic rows -->
-              <tr v-for="(service, index) in servicesData" :key="index">
+              <tr v-for="(service, index) in paginatedServices" :key="index">
                 <td class="px-6 py-4 whitespace-nowrap text-sm w-1/4">
                   <p>{{ service.user }}</p>
                 </td>
@@ -237,7 +245,16 @@
               </tr>
             </tbody>
           </table>
+           <!-- Pagination -->
+     <PaginationNavigation
+  :current_page="currentServicePage"
+  :page_size="itemsPerPage"
+  :total_entries="servicesData.length"
+  :total_pages="Math.ceil(servicesData.length / itemsPerPage)"
+  @payload="onServicePageChange"
+/>
         </div>
+
       </div>
 
       <!--Staff Perfomance summary-->
@@ -287,6 +304,14 @@
               </tr>
             </tbody>
           </table>
+          <!-- Pagination -->
+        <PaginationNavigation
+   :current_page="currentSummaryPage"
+   :page_size="itemsPerPage"
+   :total_entries="summaryData.length"
+   :total_pages="Math.ceil(summaryData.length / itemsPerPage)"
+   @page-change="onSummaryPageChange"
+ />
         </div>
       </div>
     </div>
@@ -298,14 +323,43 @@ import Header from "~/components/Header.vue";
 import { ref, watch, onMounted, computed } from "vue";
 import Highcharts from "highcharts";
 import { useUserStore } from "../../stores/user";
+import PaginationNavigation from "~/components/pagination.vue";
 
 const userStore = useUserStore();
-const servicesData = ref([])
+const servicesData = ref([]);
 const chartContainer = ref(null);
 const chartInstance = ref(null);
 const currentView = ref("monthly");
-const totalServices = ref(0)
-const topStaff = ref({ name: 'N/A', services: 0 })
+const totalServices = ref(0);
+const topStaff = ref({ name: "N/A", services: 0 });
+const itemsPerPage = ref(5);
+const currentServicePage = ref(1);
+const currentSummaryPage = ref(1);
+
+
+// Pagination handlers
+const onSummaryPageChange = ({ page, page_size }) => {
+  currentSummaryPage.value = page;
+  itemsPerPage.value = page_size;
+};
+
+const onServicePageChange = ({ page, page_size }) => {
+  currentServicePage.value = page;
+  itemsPerPage.value = page_size;
+};
+
+
+// Computed paginated data
+const paginatedSummary = computed(() => {
+  const start = (currentSummaryPage.value - 1) * itemsPerPage.value;
+  return summaryData.value.slice(start, start + itemsPerPage.value);
+});
+
+const paginatedServices = computed(() => {
+  const start = (currentServicePage.value - 1) * itemsPerPage.value;
+  return servicesData.value.slice(start, start + itemsPerPage.value);
+});
+
 
 // Load user first
 userStore.loadUser();
@@ -313,12 +367,12 @@ userStore.loadUser();
 const totals = ref({
   today: { totalEarned: 0, totalCommission: 0 },
   week: { totalEarned: 0, totalCommission: 0 },
+  month: { totalEarned: 0, totalCommission: 0 },
 });
 
 const summaryData = ref([]);
 const stats_by_month = ref([]);
 const stats_by_week = ref([]);
-
 
 // Function to load the summary data
 onMounted(async () => {
@@ -334,14 +388,32 @@ onMounted(async () => {
     stats_by_month.value = res.statsByMonth.map((m) => ({
       month: m.month,
       revenue: Number(m.revenue),
+      commission: Number(m.commission || 0),
     }));
+
+    // 🧮 Compute monthly totals
+    const totalMonthRevenue = stats_by_month.value.reduce(
+      (acc, m) => acc + m.revenue,
+      0
+    );
+    const totalMonthCommission = stats_by_month.value.reduce(
+      (acc, m) => acc + m.commission,
+      0
+    );
+
+    totals.value.month = {
+      totalEarned: totalMonthRevenue,
+      totalCommission: totalMonthCommission,
+    };
+
+    console.log("📆 Monthly totals:", totals.value.month);
 
     stats_by_week.value = res.statsByWeek.map((w) => ({
       week: `Week ${w.week}`,
       revenue: Number(w.revenue),
     }));
 
-    console.log("✅ Summary loaded:", summaryData.value);
+    console.log("Summary loaded:", summaryData.value);
     console.log("📊 Monthly stats:", stats_by_month.value);
     console.log("📈 Weekly stats:", stats_by_week.value);
   } catch (err) {
@@ -441,30 +513,28 @@ watch(
   [currentView, stats_by_month, stats_by_week],
   () => {
     renderChart();
-     window.removeEventListener("resize", () => chartInstance.value?.reflow());
+    window.removeEventListener("resize", () => chartInstance.value?.reflow());
   },
   { deep: true }
 );
-
 
 //  Watch to fetch totals and services
 watch(
   () => userStore.user,
   async (newUser) => {
-
-      if (!newUser || !newUser.role) {
+    if (!newUser || !newUser.role) {
       console.warn("User not loaded yet, skipping service fetch.", newUser);
       return;
     }
 
-    console.log("✅ User loaded:", newUser);   
+    console.log("User loaded:", newUser);
 
     try {
       const res = await $fetch("/api/services", {
         params: { role: newUser.role }, // no userId for admin
       });
 
-      // ✅ Update services table
+      // Update services table
       servicesData.value = res.services
         .filter((s) => s && s.service_date)
         .map((s) => ({
@@ -482,26 +552,24 @@ watch(
           commisionearned: s.commission ? `KES ${s.commission}` : "KES 0",
         }));
 
-      // ✅ Update totals
+      // Update totals
       totals.value.today = res.totals.today;
       totals.value.week = res.totals.week;
 
-      // ✅ Add total service count and top staff
+      // Add total service count and top staff
       totalServices.value = res.totalServices || 0;
       topStaff.value = res.topStaff || { name: "N/A", services: 0 };
 
       // 🧠 Debug logs
-      console.log("✅ Admin totals:", totals.value);
-      console.log("✅ Total services:", totalServices.value);
-      console.log("✅ Top staff:", topStaff.value);
+      console.log("Admin totals:", totals.value);
+      console.log("Total services:", totalServices.value);
+      console.log("Top staff:", topStaff.value);
     } catch (err) {
       console.error("❌ Failed to fetch services:", err);
     }
   },
   { immediate: true } // runs immediately if user already loaded
 );
-
-
 
 
 </script>
