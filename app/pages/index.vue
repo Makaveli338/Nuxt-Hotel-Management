@@ -44,7 +44,7 @@
       </div>
 
       <div
-        class="rounded-2xl bg-[url('/Nails1.jpg')] w-[400px] h-[500px] bg-cover bg-center mx-auto sm:ml-auto"
+        class="rounded-2xl bg-[url('/Nails1.jpg')] w-full sm:w-[400px] h-[500px] bg-cover bg-center mx-auto sm:ml-auto"
       ></div>
     </section>
 

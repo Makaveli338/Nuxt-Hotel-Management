@@ -184,7 +184,7 @@
               <tr>
                 <th
                   scope="col"
-                  class="px-6 py-3 text-left font-medium text-gray-500 capitalize tracking-wider"
+                  class="px-6 py-3 text-left font-medium text-gray-500 capitalize tracking-wider whitespace-nowrap"
                 >
                   Staff Name
                 </th>
@@ -270,7 +270,7 @@
               <tr>
                 <th
                   scope="col"
-                  class="px-6 py-3 text-left font-medium text-gray-500 capitalize tracking-wider"
+                  class="px-6 py-3 text-left font-medium text-gray-500 capitalize tracking-wider whitespace-nowrap"
                 >
                   Staff Name
                 </th>
