@@ -1,7 +1,7 @@
 <template>
   <!-- bg-[url('/Landing-page.jpg')]-->
   <section
-    class="h-full bg-linear-to-bl from-pink-100 to-pink-300 !w-full flex flex-col gap-20"
+    class="h-full bg-linear-to-tr from-pink-100 to-pink-300 !w-full flex flex-col gap-20"
   >
     <Header />
 
@@ -432,13 +432,15 @@
           Our Location
         </h1>
 
+        <p class="text-pink-600">We are located at Kamulu next to Co-operative Bank</p>
+
         <a
           href="https://www.google.com/maps/place/1%C2%B06'57.2%22S+37%C2%B003'54.0%22E/@-1.2825403,37.0624226,17z/data=!3m1!4b1!4m4!3m3!8m2!3d-1.2825403!4d37.0649975?hl=en&entry=ttu&g_ep=EgoyMDI1MTAwNi4wIKXMDSoASAFQAw%3D%3D"
           target="_blank"
           rel="noopener noreferrer"
           class="text-pink-600 cursor-pointer relative inline-block no-underline w-fit after:content-[''] after:absolute after:w-full after:scale-x-0 after:rounded after:h-[0.05em] after:bottom-0 after:left-0 after:bg-current after:origin-bottom-right after:transition-transform after:duration-200 after:ease-out hover:after:scale-x-100 hover:after:origin-bottom-left"
         >
-          Kamulu next to Co-operative Bank
+          View in maps
         </a>
       </div>
 
@@ -454,6 +456,9 @@
         <div class="flex justify-center sm:px-6">
           <!-- Copyright -->
           <div>
+            <button @click="goToLogin" class="hover:text-pink-500 text-sm text-pink-600 cursor-pointer relative inline-block no-underline w-fit after:content-[''] after:absolute after:w-full after:scale-x-0 after:rounded after:h-[0.05em] after:bottom-0 after:left-0 after:bg-current after:origin-bottom-right after:transition-transform after:duration-200 after:ease-out hover:after:scale-x-100 hover:after:origin-bottom-left">
+              Staff Account
+            </button>
             <p class="text-sm text-pink-600">
               &copy; {{ new Date().getFullYear() }} Beauty and Beyond. All
               rights reserved.
@@ -480,10 +485,6 @@ import Header from "~/components/Header.vue";
 import { onMounted } from "vue";
 const { $L } = useNuxtApp();
 
-//  Go to login page
-function goToLogin() {
-  navigateTo("/login", { replace: true });
-}
 
 // Map configuration
 onMounted(async () => {
@@ -504,6 +505,12 @@ onMounted(async () => {
 
   L.marker([lat, lng]).addTo(map).bindPopup("📍 Our Location");
 });
+
+//  Go to login page
+function goToLogin() {
+  navigateTo("/login", { replace: true });
+}
+
 
 useHead({
   link: [

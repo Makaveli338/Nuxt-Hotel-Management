@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       username,
       email,
       hashedPassword,
-      role || "staff",
+      role || "user",
     ]);
 
     const user = result.rows[0];

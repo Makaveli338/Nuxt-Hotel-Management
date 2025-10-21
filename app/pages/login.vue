@@ -76,7 +76,7 @@
         <div>
           <label class="block font-medium">Email:</label>
           <input
-          v-model="registerForm.email"
+            v-model="registerForm.email"
             type="email"
             class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
           />
@@ -86,7 +86,7 @@
         <div>
           <label class="block font-medium">Password:</label>
           <input
-          v-model="registerForm.password"
+            v-model="registerForm.password"
             type="password"
             class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
           />
@@ -96,7 +96,7 @@
         <div>
           <label class="block font-medium">Username:</label>
           <input
-          v-model="registerForm.username"
+            v-model="registerForm.username"
             type="text"
             class="mt-1 p-2 block w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
           />
@@ -112,12 +112,13 @@
             Login
           </button>
         </div>
-        <button  @click="handleRegister"
+        <button
+          @click="handleRegister"
           class="bg-purple-500 cursor-pointer hover:bg-purple-600 text-white py-2 px-4 rounded-3xl text-center h-fit"
         >
           Register
         </button>
-          <p v-if="message" :class="messageType">{{ message }}</p>
+        <p v-if="message" :class="messageType">{{ message }}</p>
       </div>
     </div>
   </div>
@@ -125,73 +126,71 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import { useUserStore } from '../../stores/user'
+import { useUserStore } from "../../stores/user";
+import { useAuthStore } from "../../stores/auth";
 
-
-const userStore = useUserStore()
+const userStore = useUserStore();
+const authStore = useAuthStore();
 
 const activeTab = ref("login");
-const router = useRouter()
+const router = useRouter();
 // Forms
-const loginForm = reactive({ email: '', password: '' })
-const registerForm = reactive({ username: '', email: '', password: '' })
-
+const loginForm = reactive({ email: "", password: "" });
+const registerForm = reactive({ username: "", email: "", password: "" });
 
 // Feedback messages
-const message = ref('')
-const messageType = ref('text-green-500')
-
+const message = ref("");
+const messageType = ref("text-green-500");
 
 //  LOGIN HANDLER
 const handleLogin = async () => {
-  message.value = ''
+  message.value = "";
   try {
-    const res = await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: loginForm
-    })
+    const res = await $fetch("/api/auth/login", {
+      method: "POST",
+      body: loginForm,
+    });
 
     // Save user credentials globally
-    userStore.setUser(res)
+    userStore.setUser(res);
+    authStore.login(res);
 
-    message.value = res.message || 'Login successful!'
-    messageType.value = 'text-green-500'
+    message.value = res.message || "Login successful!";
+    messageType.value = "text-green-500";
 
     // Redirect based on role
-    if (res.role === 'admin') {
-      router.push('/admindashboard')
+    if (res.role === "admin") {
+      router.push("/admindashboard");
+    } else if (res.role === "staff") {
+      router.push("/staffdashboard");
     } else {
-      router.push('/staffdashboard')
+      router.push("/"); // normal users only see the home page
     }
-
   } catch (err) {
-    message.value = err.data?.statusMessage || 'Login failed'
-    messageType.value = 'text-red-500'
+    message.value = err.data?.statusMessage || "Login failed";
+    messageType.value = "text-red-500";
   }
-}
+};
 
 //  REGISTER HANDLER
 const handleRegister = async () => {
-  message.value = ''
+  message.value = "";
   try {
-    const res = await $fetch('/api/auth/register', {
-      method: 'POST',
-      body: registerForm
-    })
+    const res = await $fetch("/api/auth/register", {
+      method: "POST",
+      body: registerForm,
+    });
 
-    message.value = `User ${res.user.username} registered successfully!`
-    messageType.value = 'text-green-500'
+    message.value = `User ${res.user.username} registered successfully!`;
+    messageType.value = "text-green-500";
 
     // Redirect user to login page
     setTimeout(() => {
-      activeTab.value = 'login'
-    }, 1000)
-
+      activeTab.value = "login";
+    }, 1000);
   } catch (err) {
-    message.value = err.data?.statusMessage || 'Registration failed'
-    messageType.value = 'text-red-500'
+    message.value = err.data?.statusMessage || "Registration failed";
+    messageType.value = "text-red-500";
   }
-}
-
-
+};
 </script>
