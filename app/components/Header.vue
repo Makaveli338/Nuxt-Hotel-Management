@@ -1,8 +1,8 @@
 <template>
   <section
-    class="p-6 flex justify-between items-center lg:w-[95%] mx-auto w-full md:w-auto"
+    class="w-full bg-card/80 backdrop-blur-md sticky top-0 z-50 p-6 flex justify-between items-center lg:w-[100%] mx-auto md:w-auto"
   >
-    <p class="ballet text-2xl sm:text-6xl text-pink-900 font-semibold">
+    <p class="ballet text-2xl sm:text-4xl text-pink-900 font-semibold">
       BeautyBeyond
     </p>
 
@@ -10,31 +10,28 @@
     <div class="flex items-center gap-4">
       <div class="relative">
         <button
-          @click="isopen = !isopen"
-          class="relative w-8 h-8 flex flex-col justify-center items-center group focus:outline-none"
-        >
-          <!-- Top line -->
-          <span
-            class="absolute block h-[2px] w-6 bg-gray-800 rounded origin-center transition-all duration-300 ease-in-out"
-            :class="
-              isopen ? 'rotate-45 translate-y-[50%]' : '-translate-y-[6px]'
-            "
-          ></span>
+  @click="isopen = !isopen"
+  class="relative w-8 h-8 flex items-center justify-center focus:outline-none cursor-pointer"
+>
+  <!-- Top line -->
+  <span
+    class="absolute block h-[2px] w-6 bg-gray-800 rounded transition-all duration-300 ease-in-out"
+    :class="isopen ? 'rotate-45 translate-y-0' : '-translate-y-[6px]'"
+  ></span>
 
-          <!-- Middle line -->
-          <span
-            class="absolute block h-[2px] w-6 bg-gray-800 rounded origin-center transition-all duration-300 ease-in-out"
-            :class="isopen ? 'opacity-0' : 'opacity-100'"
-          ></span>
+  <!-- Middle line -->
+  <span
+    class="absolute block h-[2px] w-6 bg-gray-800 rounded transition-all duration-300 ease-in-out"
+    :class="isopen ? 'opacity-0' : 'opacity-100'"
+  ></span>
 
-          <!-- Bottom line -->
-          <span
-            class="absolute block h-[2px] w-6 bg-gray-800 rounded origin-center transition-all duration-300 ease-in-out"
-            :class="
-              isopen ? '-rotate-45 -translate-y-[50%]' : 'translate-y-[6px]'
-            "
-          ></span>
-        </button>
+  <!-- Bottom line -->
+  <span
+    class="absolute block h-[2px] w-6 bg-gray-800 rounded transition-all duration-300 ease-in-out"
+    :class="isopen ? '-rotate-45 translate-y-0' : 'translate-y-[6px]'"
+  ></span>
+</button>
+
 
         <!-- Dropdown Menu -->
         <div
