@@ -14,7 +14,7 @@ export default defineNuxtConfig({
    // @ts-ignore
   server: {
     host: "0.0.0.0", // bind to all interfaces so Render can detect the port
-    port: Number(process.env.PORT) || 3000, // use the port Render provides
+    port: Number(process.env.PORT) || 4000, 
   },
 
    nitro: {

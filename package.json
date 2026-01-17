@@ -28,6 +28,7 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/leaflet": "^1.9.21",
-    "@types/pg": "^8.15.5"
+    "@types/pg": "^8.15.5",
+    "baseline-browser-mapping": "^2.9.15"
   }
 }
